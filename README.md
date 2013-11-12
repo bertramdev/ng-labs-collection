@@ -12,8 +12,8 @@ Angular collection that works with ng-repeat and other cool features
 
 ##TODO:
 
-* [ ] Remotely load data
-* [ ] Autoload remote data
-* [ ] Page remote data
-* [ ] Page local data
-* [ ] Use IndexedDb when available
+* Remotely load data
+* Autoload remote data
+* Page remote data
+* Page local data
+* Use IndexedDb when available
