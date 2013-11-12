@@ -35,6 +35,7 @@ angular.module('labsCollection', []).
 				currentPage: 0,
 				pageCount: 0,
 				loaded: 0,
+				limit: 0,
 				filter: {},
 				sort: {}
 			}
@@ -46,7 +47,6 @@ angular.module('labsCollection', []).
 			if (this.options.comparator !== void 0) this.comparator = this.options.comparator;
 
 			this.idAttr = 'id';
-			this.pageSize = 10;
 
 			this.add = function (object, options) {
 				options || (options = {});
@@ -70,7 +70,7 @@ angular.module('labsCollection', []).
 					this.add(item);
 				}
 
-				this.ngSort('+title',true);
+				this.ngSort();
 				
 				return this;
 			}
@@ -89,7 +89,9 @@ angular.module('labsCollection', []).
 
 			// Credit goes out to the angularjs team here.
 			// Had to copy it since the orderBy filter copies the array instead of sorting the original
-			this.ngSort = function(sortPredicate, reverseOrder) {
+			this.ngSort = function () {
+				var sortPredicate = this.comparator;
+				var reverse = this.reverseSort;
 				if (!sortPredicate) return this;
 				
 				sortPredicate = angular.isArray(sortPredicate) ? sortPredicate: [sortPredicate];
@@ -108,7 +110,7 @@ angular.module('labsCollection', []).
 					}, descending);
 				});
 				
-				this.sort(reverseComparator(comparator, reverseOrder));
+				this.sort(reverseComparator(comparator, reverse));
 
 				function comparator(o1, o2){
 					for ( var i = 0; i < sortPredicate.length; i++) {
@@ -182,6 +184,10 @@ angular.module('labsCollection', []).
 			}
 			this.getPageCount = function () {
 				return pageCount;
+			}
+			this.setPageSize = function (pageSize) {
+				serializedAttrs.limit = pageSize;
+				return this;
 			}
 			this.fetch = function (options) {
 				if (queryUrl){
