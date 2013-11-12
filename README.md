@@ -3,11 +3,17 @@ ng-labs-collection
 
 Angular collection that works with ng-repeat and other cool features
 
-usage
+##Usage
 
-include module 'labsCollection'
+* include module 'labsCollection'
+* inject '$labsCollection'
+* in your controller/factory/etc:  $scope.awesomeThings = new $labsCollection();
+* in your view using with ng-repeat="thing in awesomeThings"
 
-inject '$labsCollection'
+##TODO:
 
-in your controller/factory/etc:  $scope.awesomeThings = new $labsCollection();
-
+* [ ] Remotely load data
+* [ ] Autoload remote data
+* [ ] Page remote data
+* [ ] Page local data
+* [ ] Use IndexedDb when available
