@@ -1,4 +1,4 @@
-ng-labs-collection
+ng-labs-collection [![Build Status](https://travis-ci.org/bertramdev/ng-labs-collection.png?branch=master)](https://travis-ci.org/bertramdev/ng-labs-collection)
 ==================
 
 Angular collection that works with ng-repeat and other cool features
