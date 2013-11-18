@@ -27,6 +27,10 @@ function toBoolean(value) {
 	return value;
 }
 
+function makeId () {
+	return Math.round(Math.random() * 100000) + '-' + Math.round(Math.random() * 100000) + '-' + Math.round(Math.random() * 100000) + '-' + Math.round(Math.random() * 100000) + '-' + Math.round(Math.random() * 100000);
+}
+
 angular.module('labsCollection', []).
 	factory('$labsCollection', ['$http', '$parse', function ($http, $parse) {
 		return {
@@ -36,11 +40,40 @@ angular.module('labsCollection', []).
 				var labsCollection = new Array();
 		
 				angular.extend(labsCollection, {
-					add: function (object, options) {
+					currentPage: 1,
+					pageCount: 1,
+					totalPages: 1,
+					pageSize: -1,
+					idAttr: 'id',
+					add: function (obj, options) {
 						options || (options = {});
 						var sort = this.comparator && options.sort !== false;
+						if (this.all) {
+							//add all the items to the complete collection
+							this.all.add(obj);
+							this.total = this.all.length;
+							this.totalPages = Math.ceil(this.total / this.pageSize);
+							this.getPage(this.currentPage);
+							return this;
+						}
+						else {
+							if (typeof obj !== 'object'){
+								this.push(obj);
+							}
+							else {
+								if (!obj[this.idAttr]) {
+									obj[this.idAttr] = makeId();
+								}
+
+								if (!this.find(this.idAttr, this[this.idAttr])) {
+									this.push(obj);
+								}
+								else {
+									this.update(obj);
+								}
+							}
+						}
 						
-						this.push(object);
 						
 						if (sort) this.ngSort();
 
@@ -48,25 +81,55 @@ angular.module('labsCollection', []).
 					},
 
 					addAll: function (arr) {
-
-						if (angular.isArray(arr)){
-							angular.forEach(arr, function(item){
+						//if there is an all Array then this is a paged collection
+						if (this.all) {
+							//add all the items to the complete collection
+							this.all.addAll(arr);
+							this.total = this.all.length;
+							this.totalPages = Math.ceil(this.total / this.pageSize);
+							
+							this.getPage(this.currentPage);
+							return this;
+						}
+						
+						if (angular.isArray(arr)) {
+							angular.forEach(arr, function(item) {
 								this.add(item, {sort:false});
 							}, this);
 						}
 						else {
 							this.add(arr);
 						}
+						
 
-						this.ngSort();
+						if (this.comparator) {
+							this.ngSort();
+						}
 						
 						return this;
+					},
+					update: function (obj) {
+						var item = this.find(this.idAttr, obj[this.idAttr]);
+						angular.copy(item,obj);
 					},
 					remove: function (obj) {
 						this.splice(this.indexOf(obj), 1);
 						return this;
 					},
+					clear: function () {
+						this.splice(0,this.length);
+						return this;
+					},
+					getPage: function (pageNumber) {
+						var pageStart = (pageNumber - 1) * this.pageSize;
+						var items = this.all.getRange(pageStart, this.pageSize);
+						//clear out all items in the current collection
+						this.clear();
 
+						angular.forEach(items,function (item){
+							this.push(item);
+						}, this);
+					},
 					last: function() {
 						return this[this.length-1];
 					},
@@ -126,7 +189,19 @@ angular.module('labsCollection', []).
 
 						return this;
 					},
-
+					getRange: function (start, count) {
+						var i = start;
+						var end = start + count;
+						var item;
+						var toReturn = [];
+						if(this.length < end) {
+							end = this.length;
+						}
+						for (i; i < end; i++) {
+							toReturn.push(this[i]);
+						}
+						return toReturn;
+					},
 					find: function(strKey, value) {
 						if(typeof strKey !== 'string'){
 							throw new Error("The key must be a string!");
@@ -169,7 +244,9 @@ angular.module('labsCollection', []).
 						return pageCount;
 					},
 					setPageSize: function (pageSize) {
-						serializedAttrs.limit = pageSize;
+						this.pageSize = pageSize;
+						this.totalPages = Math.ceil(this.total / this.pageSize);
+						this.getPage(this.currentPage);
 						return this;
 					},
 					fetch: function (options) {
@@ -181,8 +258,18 @@ angular.module('labsCollection', []).
 						if (angular.isObject(options)){
 							return angular.extend(serializedAttrs, options);
 						}
+					},
+					toString: function() {
+						return '[object collection]';
 					}
 				}, options || {});
+
+				if (options && options.pageSize && options.pageSize > 0) {
+					labsCollection.all = this.create({comparator: options.comparator});
+					labsCollection.total = 0;
+					labsCollection
+				}
+
 				return labsCollection;
 			}
 		}

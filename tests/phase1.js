@@ -19,6 +19,10 @@ describe('Bertram Labs ngCollection - Phase 1 - Base features', function () {
 	it('Angular should think the collection is an array', function () {
 		expect(angular.isArray(labsCollection.create())).toBeTruthy();
 	});
+	it('Should be a collection', function () {
+		var collection = labsCollection.create();
+		expect(collection.toString()).toBe('[object collection]');
+	});
 	it('Should be able to add items', function() {
 		var collection = labsCollection.create();
 		expect(collection.length).toBe(0);
