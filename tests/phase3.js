@@ -80,7 +80,29 @@ describe('Bertram Labs ngCollection - Phase 3 - Remote data', function () {
 		expect(collection.length).toBe(4);
 		expect(collection[0].value).toBe('a');
 	});
-	it ('Should sort through the server', function () {
-
+	it ('Should be able to override the totalCount from http response', function () {
+		httpBackend.whenGET('/query?page=1&pageSize=2').respond({results:[{value:'a'},{value:'b'}], total:50});
+		var collection = labsCollection.create({
+			url:'/query',
+			pageSize:2
+		});
+		collection.getPage(1);
+		httpBackend.flush();
+		expect(collection.length).toBe(2);
+		expect(collection.total).toBe(50);
+		expect(collection.totalPages).toBe(25);
+	});
+	it('Should not sort locally if the mode is remote', function () {
+		httpBackend.whenGET('/query?page=1&pageSize=2').respond({results:[{value:'b'},{value:'a'}], total:50});
+		var collection = labsCollection.create({
+			url: '/query',
+			pageSize: 2,
+			comparator: function (a) {
+				return a;
+			}
+		});
+		collection.getPage(1);
+		httpBackend.flush();
+		expect(collection[0].value).toBe('b');
 	});
 });

@@ -48,7 +48,7 @@ angular.module('labsCollection', []).
 					mode: 'local',
 					add: function (obj, options) {
 						options || (options = {});
-						var sort = this.comparator && options.sort !== false;
+						var sort = this.comparator && options.sort !== false && this.mode === 'local';
 						if (this.all) {
 							//add all the items to the complete collection
 							this.all.add(obj);
@@ -101,7 +101,7 @@ angular.module('labsCollection', []).
 						}
 						
 
-						if (this.comparator) {
+						if (this.comparator && this.mode === 'local') {
 							this.ngSort();
 						}
 						
@@ -262,6 +262,10 @@ angular.module('labsCollection', []).
 						this.getPage(this.currentPage);
 						return this;
 					},
+					setComparator: function (comparator) {
+						this.comparator = comparator;
+						return this;
+					},
 					fetch: function (options) {
 						if (!this.httpConfig) {
 							this.httpConfig = {
@@ -277,12 +281,18 @@ angular.module('labsCollection', []).
 							this.httpConfig.data = this.serialize(options || {});
 						}
 						$http(this.httpConfig).success(this.successResponse).error(this.errorResponse);
+
+						return this;
 					},
 					serialize: function (options) {
-						return angular.extend({
+						var serialized = angular.extend({
 							page:this.currentPage,
 							pageSize:this.pageSize
 						}, options);
+						if (angular.isObject(this.comparator) && !angular.isFunction(this.comparator)) {
+							serialized.sort = this.comparator
+						}
+						return serialized;
 					},
 					toString: function() {
 						return '[object collection]';
@@ -300,7 +310,7 @@ angular.module('labsCollection', []).
 						}
 						else if (angular.isObject(data)){
 							labsCollection.addAll(data.results);
-							labsCollection.setTotals(data.totalItems);
+							labsCollection.setTotals(data.total);
 						}
 					}
 					labsCollection.errorResponse = function (data, status) {

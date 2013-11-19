@@ -79,4 +79,9 @@ describe('Bertram Labs ngCollection - Phase 1 - Base features', function () {
 		expect(angular.isArray(found)).toBeTruthy();
 		expect(found.length).toBe(3);
 	});
+	it('Should create an idAttribute if there is not one (default idAttr is id)', function () {
+		var collection = labsCollection.create();
+		collection.addAll({test:'test'});
+		expect(collection[0].id).toBeDefined();
+	});
 });
