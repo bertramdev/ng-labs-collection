@@ -45,14 +45,14 @@ angular.module('labsCollection', []).
 					totalPages: 1,
 					pageSize: -1,
 					idAttr: 'id',
+					mode: 'local',
 					add: function (obj, options) {
 						options || (options = {});
 						var sort = this.comparator && options.sort !== false;
 						if (this.all) {
 							//add all the items to the complete collection
 							this.all.add(obj);
-							this.total = this.all.length;
-							this.totalPages = Math.ceil(this.total / this.pageSize);
+							this.setTotals();
 							this.getPage(this.currentPage);
 							return this;
 						}
@@ -85,8 +85,7 @@ angular.module('labsCollection', []).
 						if (this.all) {
 							//add all the items to the complete collection
 							this.all.addAll(arr);
-							this.total = this.all.length;
-							this.totalPages = Math.ceil(this.total / this.pageSize);
+							this.setTotals();
 							
 							this.getPage(this.currentPage);
 							return this;
@@ -122,13 +121,19 @@ angular.module('labsCollection', []).
 					},
 					getPage: function (pageNumber) {
 						var pageStart = (pageNumber - 1) * this.pageSize;
-						var items = this.all.getRange(pageStart, this.pageSize);
-						//clear out all items in the current collection
-						this.clear();
+						var items;
+						if (this.all) {
+							items = this.all.getRange(pageStart, this.pageSize);
+							//clear out all items in the current collection
+							this.clear();
 
-						angular.forEach(items,function (item){
-							this.push(item);
-						}, this);
+							angular.forEach(items,function (item){
+								this.push(item);
+							}, this);
+						}
+						else if (this.mode === 'remote') {
+							this.fetch({page:pageNumber});
+						} 
 					},
 					last: function() {
 						return this[this.length-1];
@@ -156,7 +161,6 @@ angular.module('labsCollection', []).
 							}, descending);
 						});
 						
-						this.sort(reverseComparator(comparator, reverse));
 
 						function comparator(o1, o2){
 							for ( var i = 0; i < sortPredicate.length; i++) {
@@ -186,7 +190,12 @@ angular.module('labsCollection', []).
 								return t1 < t2 ? -1 : 1;
 							}
 						}
-
+						if (this.mode == 'local') {
+							this.sort(reverseComparator(comparator, reverse));
+						}
+						else {
+							this.fetch();
+						}
 						return this;
 					},
 					getRange: function (start, count) {
@@ -201,6 +210,10 @@ angular.module('labsCollection', []).
 							toReturn.push(this[i]);
 						}
 						return toReturn;
+					},
+					setTotals: function (totalOverride) {
+						this.total = totalOverride || this.all.length;
+						this.totalPages = Math.ceil(this.total / this.pageSize);
 					},
 					find: function(strKey, value) {
 						if(typeof strKey !== 'string'){
@@ -245,29 +258,61 @@ angular.module('labsCollection', []).
 					},
 					setPageSize: function (pageSize) {
 						this.pageSize = pageSize;
-						this.totalPages = Math.ceil(this.total / this.pageSize);
+						this.setTotals();
 						this.getPage(this.currentPage);
 						return this;
 					},
 					fetch: function (options) {
-						if (queryUrl){
-							$http.get(queryUrl,{params:this.serialize(options)});
+						if (!this.httpConfig) {
+							this.httpConfig = {
+								url:this.url,
+								method:'GET'
+							}
 						}
+						//set options to the correct place
+						if (this.httpConfig.method === 'GET') {
+							this.httpConfig.params = this.serialize(options || {});
+						}
+						else {
+							this.httpConfig.data = this.serialize(options || {});
+						}
+						$http(this.httpConfig).success(this.successResponse).error(this.errorResponse);
 					},
 					serialize: function (options) {
-						if (angular.isObject(options)){
-							return angular.extend(serializedAttrs, options);
-						}
+						return angular.extend({
+							page:this.currentPage,
+							pageSize:this.pageSize
+						}, options);
 					},
 					toString: function() {
 						return '[object collection]';
 					}
 				}, options || {});
 
-				if (options && options.pageSize && options.pageSize > 0) {
+				if (options && (options.url || options.httpConfig)) {
+					labsCollection.mode = 'remote';
+					labsCollection.successResponse = function (data, status) {
+						if (!labsCollection.keepAll) {
+							labsCollection.clear();
+						}
+						if (angular.isArray(data)) {
+							labsCollection.addAll(data);
+						}
+						else if (angular.isObject(data)){
+							labsCollection.addAll(data.results);
+							labsCollection.setTotals(data.totalItems);
+						}
+					}
+					labsCollection.errorResponse = function (data, status) {
+						console.console.error('collection fetch error', data, status);
+					}
+					if (options.autoLoad) {
+						labsCollection.fetch();
+					}
+				}
+				if (options && options.pageSize && options.pageSize > 0 && labsCollection.mode !== 'remote') {
 					labsCollection.all = this.create({comparator: options.comparator});
 					labsCollection.total = 0;
-					labsCollection
 				}
 
 				return labsCollection;

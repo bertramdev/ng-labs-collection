@@ -15,6 +15,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'components/angular/angular.min.js',
+      'components/angular-mocks/angular-mocks.js',
       'ng-labs-collection.js',
       'tests/*.js'
     ],
@@ -55,7 +56,7 @@ module.exports = function(config) {
     // - Safari (only Mac; has to be installed with `npm install karma-safari-launcher`)
     // - PhantomJS
     // - IE (only Windows; has to be installed with `npm install karma-ie-launcher`)
-    browsers: [process.env.TRAVIS ? 'Firefox' : 'Chrome'],
+    browsers: ['Chrome', 'Firefox', 'PhantomJS'],
 
 
     // If browser does not capture in given timeout [ms], kill it

@@ -23,6 +23,10 @@ describe('Bertram Labs ngCollection - Phase 1 - Base features', function () {
 		var collection = labsCollection.create();
 		expect(collection.toString()).toBe('[object collection]');
 	});
+	it('Should have a default mode of local', function () {
+		var collection = labsCollection.create();
+		expect(collection.mode).toBe('local');
+	});
 	it('Should be able to add items', function() {
 		var collection = labsCollection.create();
 		expect(collection.length).toBe(0);
