@@ -1,0 +1,30 @@
+{
+  "name": "angular-labs-collection",
+  "main": "ng-labs-collection.js",
+  "version": "0.0.1",
+  "homepage": "https://github.com/bertramdev/ng-labs-collection",
+  "authors": [
+    "Andy Warner <awarner@bertramcapital.com>"
+  ],
+  "description": "A collection module for angular",
+  "keywords": [
+    "angular",
+    "collection",
+    "ng",
+    "bertram",
+    "labs"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-mocks": "~1.2.1",
+    "angular": "~1.2.1"
+  }
+}
