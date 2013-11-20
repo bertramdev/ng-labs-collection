@@ -65,7 +65,7 @@ angular.module('labsCollection', []).
 									obj[this.idAttr] = makeId();
 								}
 
-								if (!this.find(this.idAttr, this[this.idAttr])) {
+								if (!this.find(this.idAttr, obj[this.idAttr])) {
 									this.push(obj);
 								}
 								else {
