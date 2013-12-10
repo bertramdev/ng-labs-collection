@@ -35,7 +35,6 @@ angular.module('labsCollection', []).
 	factory('$labsCollection', ['$http', '$parse', function ($http, $parse) {
 		return {
 			create: function (options) {
-				//TODO: add options into labs collection object;
 
 				var labsCollection = new Array();
 		
@@ -43,7 +42,7 @@ angular.module('labsCollection', []).
 					currentPage: 1,
 					pageCount: 1,
 					totalPages: 1,
-					pageSize: -1,
+					pageSize: 10,
 					idAttr: 'id',
 					mode: 'local',
 					add: function (obj, options) {
@@ -79,7 +78,6 @@ angular.module('labsCollection', []).
 
 						return this;
 					},
-
 					addAll: function (arr) {
 						//if there is an all Array then this is a paged collection
 						if (this.all) {
@@ -267,20 +265,37 @@ angular.module('labsCollection', []).
 						return this;
 					},
 					fetch: function (options) {
-						if (!this.httpConfig) {
-							this.httpConfig = {
-								url:this.url,
-								method:'GET'
-							}
-						}
-						//set options to the correct place
-						if (this.httpConfig.method === 'GET') {
-							this.httpConfig.params = this.serialize(options || {});
+						var thisCollection = this;
+						var arrayGetter = $parse(this.arrayProp);
+						var totalGetter = $parse(this.totalProp);
+						if (this.resource) {
+							this.resource.query(this.serialize(options || {})).$promise.then(
+								function (response) {
+									if (angular.isArray(response)){
+										thisCollection.addAll(response);
+									}
+									else {
+										thisCollection.addAll(arrayGetter(response));
+										thisCollection.setTotals(totalGetter(response));
+									}
+								});
 						}
 						else {
-							this.httpConfig.data = this.serialize(options || {});
+							if (!this.httpConfig) {
+								this.httpConfig = {
+									url:this.url,
+									method:'GET'
+								}
+							}
+							//set options to the correct place
+							if (this.httpConfig.method === 'GET') {
+								this.httpConfig.params = this.serialize(options || {});
+							}
+							else {
+								this.httpConfig.data = this.serialize(options || {});
+							}
+							$http(this.httpConfig).success(this.successResponse).error(this.errorResponse);
 						}
-						$http(this.httpConfig).success(this.successResponse).error(this.errorResponse);
 
 						return this;
 					},
@@ -299,7 +314,10 @@ angular.module('labsCollection', []).
 					}
 				}, options || {});
 
-				if (options && (options.url || options.httpConfig)) {
+				if (options && (options.url || options.httpConfig || options.ngResource)) {
+					if (options.ngResource) {
+						labsCollection.resource = options.ngResource;
+					}
 					labsCollection.mode = 'remote';
 					labsCollection.successResponse = function (data, status) {
 						if (!labsCollection.keepAll) {
