@@ -300,10 +300,10 @@ angular.module('labsCollection', []).
 						return this;
 					},
 					serialize: function (options) {
-						var serialized = angular.extend({
-							page:this.currentPage,
-							pageSize:this.pageSize
-						}, options);
+						var pageObj = {}
+						pageObj[this.pageAttr] = this.page,
+						pageObj[this.pageSizeAttr] = this.pageSize;
+						var serialized = angular.extend(pageObj, options);
 						if (angular.isObject(this.comparator) && !angular.isFunction(this.comparator)) {
 							serialized.sort = this.comparator
 						}
@@ -319,6 +319,8 @@ angular.module('labsCollection', []).
 						labsCollection.resource = options.ngResource;
 					}
 					labsCollection.mode = 'remote';
+					labsCollection.pageAttr = options.pageAttr || 'page';
+					labsCollection.pageSizeAttr = options.pageSizeAttr || 'pageSize';
 					labsCollection.successResponse = function (data, status) {
 						if (!labsCollection.keepAll) {
 							labsCollection.clear();
