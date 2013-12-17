@@ -271,6 +271,9 @@ angular.module('labsCollection', []).
 						if (this.resource) {
 							this.resource.query(this.serialize(options || {})).$promise.then(
 								function (response) {
+									if (!labsCollection.keepAll) {
+										labsCollection.clear();
+									}
 									if (angular.isArray(response)){
 										thisCollection.addAll(response);
 									}
@@ -305,7 +308,7 @@ angular.module('labsCollection', []).
 						pageObj[this.pageSizeAttr] = this.pageSize;
 						var serialized = angular.extend(pageObj, options);
 						if (angular.isObject(this.comparator) && !angular.isFunction(this.comparator)) {
-							serialized.sort = this.comparator
+							serialized.sort = this.comparator;
 						}
 						return serialized;
 					},
@@ -337,7 +340,7 @@ angular.module('labsCollection', []).
 						console.console.error('collection fetch error', data, status);
 					}
 					if (options.autoLoad) {
-						labsCollection.fetch();
+						labsCollection.fetch({page:1});
 					}
 				}
 				if (options && options.pageSize && options.pageSize > 0 && labsCollection.mode !== 'remote') {
