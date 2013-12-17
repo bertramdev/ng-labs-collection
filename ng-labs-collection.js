@@ -266,8 +266,8 @@ angular.module('labsCollection', []).
 					},
 					fetch: function (options) {
 						var thisCollection = this;
-						var arrayGetter = $parse(this.arrayProp);
-						var totalGetter = $parse(this.totalProp);
+						var arrayGetter = $parse(this.arrayProp || 'data');
+						var totalGetter = $parse(this.totalProp || 'total');
 						if (this.resource) {
 							this.resource.query(this.serialize(options || {})).$promise.then(
 								function (response) {
