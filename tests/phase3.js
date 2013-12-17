@@ -105,4 +105,17 @@ describe('Bertram Labs ngCollection - Phase 3 - Remote data', function () {
 		httpBackend.flush();
 		expect(collection[0].value).toBe('b');
 	});
+	it('Should not include any paging attrs if pageSize === \'ALL\'', function() {
+		httpBackend.whenGET('/query?').respond({results:[{value:'b'},{value:'a'}], total:50});
+		var collection = labsCollection.create({
+			url: '/query',
+			pageSize: 'ALL',
+			comparator: function (a) {
+				return a;
+			}
+		});
+		collection.getPage(1);
+		httpBackend.flush();
+		expect(collection[0].value).toBe('b');
+	})
 });

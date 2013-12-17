@@ -304,8 +304,13 @@ angular.module('labsCollection', []).
 					},
 					serialize: function (options) {
 						var pageObj = {}
-						pageObj[this.pageAttr] = this.page,
-						pageObj[this.pageSizeAttr] = this.pageSize;
+						if (typeof(this.pageSize) === 'string' && this.pageSize === 'ALL') {
+							delete options.page;
+						}
+						else {
+							pageObj[this.pageAttr] = options.page;
+							pageObj[this.pageSizeAttr] = this.pageSize;
+						}
 						var serialized = angular.extend(pageObj, options);
 						if (angular.isObject(this.comparator) && !angular.isFunction(this.comparator)) {
 							serialized.sort = this.comparator;
