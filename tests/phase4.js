@@ -29,9 +29,9 @@ describe('Bertram Labs ngCollection - Phase 4 - using ngResource', function () {
 		httpBackend.flush();
 		expect(collection.length).toBe(5);
 	});
-	it('Should accept an arrayProp and a totalProp for queries returning objects', function() {
-		httpBackend.expectGET('/test?page=1&pageSize=10').respond({data:[{value:'a'},{value:'e'},{value:'b'},{value:'c'},{value:'d'}],total:100});
-		var collection = labsCollection.create({ngResource:resource2, autoLoad:true, arrayProp:'data', totalProp: 'total'});
+	it('Should accept an arrayProp and a metaProp for queries returning objects', function() {
+		httpBackend.expectGET('/test?page=1&pageSize=10').respond({data:[{value:'a'},{value:'e'},{value:'b'},{value:'c'},{value:'d'}],meta:{total:100}});
+		var collection = labsCollection.create({ngResource:resource2, autoLoad:true, arrayProp:'data', metaProp: 'meta'});
 		httpBackend.flush();
 		expect(collection.totalPages).toBe(10);
 		expect(collection.length).toBe(5);

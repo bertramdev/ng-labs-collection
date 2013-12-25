@@ -6,7 +6,7 @@
  */
 
 (function(window, angular) {
-'use strict';
+
 
 
 //taken from angularjs code to make the sort work the same as in angular
@@ -45,6 +45,7 @@ angular.module('labsCollection', []).
 					pageSize: 10,
 					idAttr: 'id',
 					mode: 'local',
+					meta: {},
 					add: function (obj, options) {
 						options || (options = {});
 						var sort = this.comparator && options.sort !== false && this.mode === 'local';
@@ -138,63 +139,76 @@ angular.module('labsCollection', []).
 					},
 					// Credit goes out to the angularjs team here.
 					// Had to copy it since the orderBy filter copies the array instead of sorting the original
-					ngSort: function () {
-						var sortPredicate = this.comparator;
-						var reverse = this.reverseSort;
-						if (!sortPredicate) return this;
-						
-						sortPredicate = angular.isArray(sortPredicate) ? sortPredicate: [sortPredicate];
-
-						sortPredicate = map(sortPredicate, function(predicate){
-							var descending = false, get = predicate || identity;
-							if (angular.isString(predicate)) {
-								if ((predicate.charAt(0) == '+' || predicate.charAt(0) == '-')) {
-									descending = predicate.charAt(0) == '-';
-									predicate = predicate.substring(1);
-								}
-								get = $parse(predicate);
-							}
-							return reverseComparator(function(a,b){
-								return compare(get(a),get(b));
-							}, descending);
-						});
-						
-
-						function comparator(o1, o2){
-							for ( var i = 0; i < sortPredicate.length; i++) {
-								var comp = sortPredicate[i](o1, o2);
-								if (comp !== 0) return comp;
-							}
-							return 0;
-						}
-						
-						function reverseComparator(comp, descending) {
-							return toBoolean(descending)
-								? function(a,b){return comp(b,a);}
-								: comp;
-						}
-						
-						function compare(v1, v2){
-							var t1 = typeof v1;
-							var t2 = typeof v2;
-							if (t1 == t2) {
-								if (t1 == "string") {
-									v1 = v1.toLowerCase();
-									v2 = v2.toLowerCase();
-								}
-								if (v1 === v2) return 0;
-									return v1 < v2 ? -1 : 1;
-							} else {
-								return t1 < t2 ? -1 : 1;
-							}
-						}
-						if (this.mode == 'local') {
-							this.sort(reverseComparator(comparator, reverse));
-						}
-						else {
+					ngSort: function (sort) {
+						if (this.mode === 'remote') {
+							this.meta.sort = sort;
 							this.fetch();
 						}
+						else {
+							var sortPredicate = this.comparator;
+							var reverse = this.reverseSort;
+							if (!sortPredicate) return this;
+							
+							function comparator(o1, o2){
+								for ( var i = 0; i < sortPredicate.length; i++) {
+									var comp = sortPredicate[i](o1, o2);
+									if (comp !== 0) return comp;
+								}
+								return 0;
+							}
+							
+							function reverseComparator(comp, descending) {
+								return toBoolean(descending)
+									? function(a,b){return comp(b,a);}
+									: comp;
+							}
+							
+							function compare(v1, v2){
+								var t1 = typeof v1;
+								var t2 = typeof v2;
+								if (t1 == t2) {
+									if (t1 == "string") {
+										v1 = v1.toLowerCase();
+										v2 = v2.toLowerCase();
+									}
+									if (v1 === v2) return 0;
+										return v1 < v2 ? -1 : 1;
+								} else {
+									return t1 < t2 ? -1 : 1;
+								}
+							}
+							sortPredicate = angular.isArray(sortPredicate) ? sortPredicate: [sortPredicate];
+
+							sortPredicate = map(sortPredicate, function(predicate){
+								var descending = false, get = predicate || identity;
+								if (angular.isString(predicate)) {
+									if ((predicate.charAt(0) == '+' || predicate.charAt(0) == '-')) {
+										descending = predicate.charAt(0) == '-';
+										predicate = predicate.substring(1);
+									}
+									get = $parse(predicate);
+								}
+								return reverseComparator(function(a,b){
+									return compare(get(a),get(b));
+								}, descending);
+							});
+							if (this.mode == 'local') {
+								this.sort(reverseComparator(comparator, reverse));
+							}
+							else {
+								this.fetch();
+							}
+						}
 						return this;
+					},
+					filter: function(filter) {
+						if (this.mode === 'remote') {
+							this.meta.filter = filter;
+							this.fetch();
+						}
+						else {
+
+						}
 					},
 					getRange: function (start, count) {
 						var i = start;
@@ -267,10 +281,13 @@ angular.module('labsCollection', []).
 					fetch: function (options) {
 						var thisCollection = this;
 						var arrayGetter = $parse(this.arrayProp || 'data');
-						var totalGetter = $parse(this.totalProp || 'total');
+						var totalGetter = $parse(this.metaProp || 'meta');
 						if (this.resource) {
-							this.resource.query(this.serialize(options || {})).$promise.then(
+							this.$promise = this.resource.query(this.serialize(options || {})).$promise;
+							this.isResolved = false;
+							this.$promise.then(
 								function (response) {
+									thisCollection.isResolved = true;
 									if (!labsCollection.keepAll) {
 										labsCollection.clear();
 									}
@@ -279,7 +296,7 @@ angular.module('labsCollection', []).
 									}
 									else {
 										thisCollection.addAll(arrayGetter(response));
-										thisCollection.setTotals(totalGetter(response));
+										thisCollection.setTotals(totalGetter(response).total);
 									}
 								});
 						}
@@ -303,7 +320,7 @@ angular.module('labsCollection', []).
 						return this;
 					},
 					serialize: function (options) {
-						var pageObj = {}
+						var pageObj = {};
 						if (typeof(this.pageSize) === 'string' && this.pageSize === 'ALL') {
 							delete options.page;
 						}
@@ -311,10 +328,7 @@ angular.module('labsCollection', []).
 							pageObj[this.pageAttr] = options.page;
 							pageObj[this.pageSizeAttr] = this.pageSize;
 						}
-						var serialized = angular.extend(pageObj, options);
-						if (angular.isObject(this.comparator) && !angular.isFunction(this.comparator)) {
-							serialized.sort = this.comparator;
-						}
+						var serialized = angular.extend(pageObj, options, this.meta);
 						return serialized;
 					},
 					toString: function() {
@@ -342,7 +356,7 @@ angular.module('labsCollection', []).
 						}
 					}
 					labsCollection.errorResponse = function (data, status) {
-						console.console.error('collection fetch error', data, status);
+						console.error('collection fetch error', data, status);
 					}
 					if (options.autoLoad) {
 						labsCollection.fetch({page:1});
