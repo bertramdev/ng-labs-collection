@@ -108,7 +108,7 @@ angular.module('labsCollection', []).
 					},
 					update: function (obj) {
 						var item = this.find(this.idAttr, obj[this.idAttr]);
-						angular.copy(item,obj);
+						angular.copy(obj,item);
 					},
 					remove: function (obj) {
 						this.splice(this.indexOf(obj), 1);
