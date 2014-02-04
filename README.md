@@ -39,13 +39,13 @@ angular.module('myApp',['labsCollection'])
 #### Basic usage:
 
 ```
-	var myCollection = new $labsCollection()
+	var myCollection = $labsCollection.create()
 ```
 
 #### Simple Remote loading:
 
 ```
-	var myCollection = new $labsCollection({
+	var myCollection = $labsCollection.create({
     	url: '/query',
         autoLoad: true //optional
     })
@@ -54,7 +54,7 @@ angular.module('myApp',['labsCollection'])
 #### Complex Remote loading:
 
 ```
-	var myCollection = new $labsCollection({
+	var myCollection = $labsCollection.create({
     	httpConfig: {
 			url:'/query',
 			method:'GET',
@@ -74,7 +74,7 @@ angular.module('myApp',['labsCollection'])
 
 ```
 	var resouce = new $resource('/some/url');
-	var myCollection = new $labsCollection({
+	var myCollection = $labsCollection.create({
     	ngResource: resource,
         autoLoad: true //optional
     })
