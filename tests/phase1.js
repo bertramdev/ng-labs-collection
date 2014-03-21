@@ -61,6 +61,23 @@ describe('Bertram Labs ngCollection - Phase 1 - Base features', function () {
 		collection.addAll(['d','e','b','a','c']);
 		expect(collection[0]).toBe('a');
 	});
+	it('Should not use ngSort strategy when customSortStrategy is true', function() {
+		var collection = labsCollection.create({
+			customSortStrategy: true,
+			comparator: function (a, b) {
+				console.log('a', a);
+				console.log('b', b);
+				if (a < b)
+					return -1;
+				if (a > b)
+					return 1;
+				// a must be equal to b
+				return 0;
+			}
+		});
+		collection.addAll(['d','e','b','a','c']);
+		expect(collection[0]).toBe('a');
+	});
 	it('Should be able to find an item', function() {
 		var collection = labsCollection.create();
 		expect(collection.length).toBe(0);

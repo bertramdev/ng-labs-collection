@@ -145,6 +145,10 @@ angular.module('labsCollection', []).
 							this.fetch();
 						}
 						else {
+							if (this.customSortStrategy) {
+								this.sort(this.comparator);
+								return;
+							}	
 							var sortPredicate = this.comparator;
 							var reverse = this.reverseSort;
 							if (!sortPredicate) return this;
